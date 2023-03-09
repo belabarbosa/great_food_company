@@ -9,3 +9,4 @@ seaborn==0.12.1
 streamlit==1.11.0
 streamlit-folium==0.7.0
 haversine==2.7.0
+inflection==0.5.1
