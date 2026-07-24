@@ -2,31 +2,23 @@
 # Importing libraries
 # -------------------------------------
 import pandas as pd
-import folium 
-from PIL import Image
+import folium
 import streamlit as st
 from streamlit_folium import folium_static
 from folium.plugins import MarkerCluster
+
+from utils import hide_streamlit_style, render_logo, render_footer, render_country_filter
 
 # ----------------------------
 # Configuration
 # ----------------------------
 
 st.set_page_config(page_icon=":fork_and_knife:",
-                   page_title='Overhall', 
+                   page_title='Overall',
                    layout='wide'
 )
-  
 
-# Hiding Streamilit style
-hide_st_style= """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+hide_streamlit_style()
 
 # -------------------------------------
 # Functions
@@ -74,33 +66,17 @@ def create_map(dataframe):
 # ----------------------------
 # Importing dataset
 # ----------------------------
-# import file
 data_source = pd.read_csv('zomato_clean.csv')
-
-# create a copy of the dataframe 
-df=data_source.copy()
+df = data_source.copy()
 
 
 # ----------------------------
 # Creating side bar
 # ----------------------------
-                              
-image = Image.open('great_food_logo.png')
-st.sidebar.image(image, width=140)
 
-country = st.sidebar.multiselect(
-    "Select the Country:",
-    options=df['country_name'].unique().tolist(),
-    default=df['country_name'].unique().tolist(),
-)
-
-# enable the filter for countries
-selected_rows =  df['country_name'].isin(country)
-df = df.loc[selected_rows , :]
-
-st.sidebar.markdown( '''---''' )
-st.sidebar.markdown ('###### Powered by Isabela Barbosa')
-st.sidebar.markdown ('###### Data Scientist @ Comunidade DS')
+render_logo()
+df = render_country_filter(df)
+render_footer()
 
 #==================================================
 # Layout Overall page
@@ -109,7 +85,7 @@ st.sidebar.markdown ('###### Data Scientist @ Comunidade DS')
 st.title( ':fork_and_knife:Great Food')
 st.markdown( '### The place to find your new favorite restaurant!' )
 st.markdown( '''---''' )
-    
+
 
 with st.container():
     st.markdown( "## Our Numbers :chart_with_upwards_trend:")
@@ -117,28 +93,27 @@ with st.container():
     col1, col2, col3, col4, col5 = st.columns( 5, gap='large')
     with col1:
         number_of_countries = df['country_name'].nunique()
-        col1.metric( 'Registread Countries ',  number_of_countries )       
+        col1.metric( 'Registered Countries',  number_of_countries )
 
     with col2:
         number_of_cities = df['city'].nunique()
-        col2.metric( 'Registread Cities ',  number_of_cities)
+        col2.metric( 'Registered Cities',  number_of_cities)
 
     with col3:
-        registred_restaurants = (f"{df['restaurant_id'].nunique():,}".replace(',', ','))
-        col3.metric( 'Registred Restaurants', registred_restaurants )
+        registered_restaurants = (f"{df['restaurant_id'].nunique():,}".replace(',', ','))
+        col3.metric( 'Registered Restaurants', registered_restaurants )
 
     with col4:
         number_of_cuisines = df['cuisines'].nunique()
         col4.metric( 'Types of Cuisines', number_of_cuisines )
-         
+
     with col5:
         sum_votes = df['votes'].sum()
         votes = (f"{sum_votes:,}".replace(',', ','))
         col5.metric('Reviews Received', value=votes)
-        
+
 
 st.markdown( '''---''' )
 with st.container():
-    st.markdown( "## Check the map bellow to find Great Food locations 🗺️" )
+    st.markdown( "## Check the map below to find Great Food locations 🗺️" )
     create_map(df)
-    

@@ -2,21 +2,11 @@
 # Importing libraries
 # -------------------------------------
 import pandas as pd
-import re
-import plotly.express as px
-import folium 
-import seaborn as se
-import plotly.graph_objects as go
-import numpy as np
-from haversine import haversine
-import inflection
-from PIL import Image
 import streamlit as st
-from streamlit_folium import folium_static
-from folium.plugins import MarkerCluster
-
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud, STOPWORDS
+
+from utils import hide_streamlit_style, render_logo, render_footer, render_country_filter
 
 
 # -------------------------------------
@@ -62,7 +52,7 @@ def write_metrics( df ):
 
     cuisines = top_cuisines( df )
 
-    italian, american, arabian, japonese, brazilian = st.columns(len(cuisines))
+    italian, american, arabian, japanese, brazilian = st.columns(len(cuisines))
 
     with italian:
         st.metric(
@@ -97,7 +87,7 @@ def write_metrics( df ):
             """,
         )
 
-    with japonese:
+    with japanese:
         st.metric(
             label=f'Japanese: {cuisines["Japanese"]["restaurant_name"]}',
             value=f'{cuisines["Japanese"]["aggregate_rating"]}/5.0',
@@ -114,33 +104,24 @@ def write_metrics( df ):
             value=f'{cuisines["Brazilian"]["aggregate_rating"]}/5.0',
             help=f"""
             Country: {cuisines["Brazilian"]['country_name']}\n
-            Cidade: {cuisines["Brazilian"]['city']}\n
+            City: {cuisines["Brazilian"]['city']}\n
             Average price of meal for two (U.S. Dollar): {cuisines["Brazilian"]['price_dollar']}
             """,
         )
 
     return None
 
-    
+
 # ----------------------------
 # Configuration
 # ----------------------------
 
 st.set_page_config(page_icon=":fork_and_knife:",
                    page_title='Cuisines',
-                   layout='wide' # specify how the page content should be laid out =  default is 'centered'
+                   layout='wide'
 )
-  
 
-# Hiding Streamilit style
-hide_st_style= """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+hide_streamlit_style()
 
 # ================================================================================================
 #                             Beginning of the code's logical structure
@@ -149,35 +130,17 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 # ----------------------------
 # Importing dataset
 # ----------------------------
-# import file
-# import file
 data_source = pd.read_csv('zomato_clean.csv')
-
-# create a copy of the dataframe 
-df=data_source.copy()
+df = data_source.copy()
 
 
 # ----------------------------
 # Creating side bar
 # ----------------------------
-                                
-image = Image.open('great_food_logo.png')
-st.sidebar.image(image, width=140)
 
-country = st.sidebar.multiselect(
-    "Select the Country:",
-    options=df['country_name'].unique(),
-    default=df['country_name'].unique()
-)
-
-
-# enable the filter for countries
-selected_rows =  df['country_name'].isin(country)
-df = df.loc[selected_rows , :]
-
-st.sidebar.markdown( '''---''' )
-st.sidebar.markdown ('###### Powered by Isabela Barbosa')
-st.sidebar.markdown ('###### Data Scientist @ Comunidade DS')
+render_logo()
+df = render_country_filter(df)
+render_footer()
 
 #==================================================
 # Layout Cuisines Page
@@ -188,15 +151,15 @@ st.title( '🍽️Cuisines')
 st.markdown( '''---''' )
 st.markdown( "## Best Restaurant of the Main Cuisines Types" )
 
-fig = write_metrics( df )
-    
-    
+write_metrics( df )
+
+
 st.markdown( '''---''' )
 with st.container():
     st.subheader('Types of Cuisines')
     text = " ".join(cat for cat in df.cuisines)
 
-    # Ploting Word Cloud
+    # Plotting the word cloud
     word_cloud = WordCloud(
         background_color = 'white',
         width=600,
@@ -206,17 +169,14 @@ with st.container():
         stopwords=STOPWORDS,
         ).generate(text)
 
-    # Display the generated Word Cloud
-    plt.imshow(word_cloud)
-    plt.axis("off")
-    fig = plt.show()
-    st.set_option('deprecation.showPyplotGlobalUse', False)
+    fig, ax = plt.subplots()
+    ax.imshow(word_cloud)
+    ax.axis("off")
     st.pyplot(fig)
 
-    
+
 st.markdown( '''---''' )
 with st.container():
     st.subheader('Top 10 Restaurants')
     rest10 = df[['restaurant_name', 'country_name', 'city', 'cuisines', 'price_dollar', 'aggregate_rating', 'votes']].sort_values('aggregate_rating', ascending=False).head(30)
     st.dataframe(rest10)
-    
